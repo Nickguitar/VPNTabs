@@ -18,9 +18,9 @@ Then, we can create a docker container with a VPN client and a proxy server runn
 1. Clone the repository
 git clone https://github.com/Nickguitar/VPNTabs
 
-2. Move all your required VPN config files to the folder config_files (including credentials file, if needed)
+2. Copy all your required VPN config files to the folder config_files (including credentials file, if needed)
 e.g:
-mv ~/myFiles/mullvad_config_linux/* VPNTabs/config_files
+cp ~/myFiles/mullvad_config_linux/* VPNTabs/config_files
 
 3. Run the setup passing the config file your VPN will use and the local port the proxy will use (default: 3128)
 e.g:
