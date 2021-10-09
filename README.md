@@ -54,7 +54,7 @@ squid_openvpn:1.0
 *The envoriment variable* `OVPN_FILE` *is used to know which file should openvpn use
 
 
-###If everything is ok, you should see port 3128 (or anyone you chose) listening on your machine.
+### If everything is ok, you should see port 3128 (or anyone you chose) listening on your machine.
 ```
 $ netstat -tapeno | grep 3128
 tcp     0    0 0.0.0.0:3128       0.0.0.0:*    LISTEN    0   5767579  -  off (0.00/0/0)
