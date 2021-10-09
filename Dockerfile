@@ -4,7 +4,6 @@ RUN ln -s /dev/null /var/log/squid/access.log
 EXPOSE 3128
 COPY ./squid.conf /etc/squid/squid.conf
 COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 RUN mkdir /ovpn/
 WORKDIR "/ovpn"
 ENTRYPOINT ["/entrypoint.sh"]
