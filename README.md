@@ -17,12 +17,13 @@ Then, we can create a docker container with a VPN client and a proxy server runn
 ```
 git clone https://github.com/Nickguitar/VPNTabs
 ```
+**Important note:** if your user doesn't have permission to run docker containers you need to run the scripts with `sudo`
 ### 3. Building the docker image and the `setup.sh`
 ```
 cd VPNTabs
 ```
 ```
-./build
+./build.sh
 ```
 *[Alternative] Building only the docker image*
 ```
