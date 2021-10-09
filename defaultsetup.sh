@@ -28,6 +28,6 @@ docker run -d --rm \
 --device /dev/net/tun \
 --sysctl net.ipv6.conf.all.disable_ipv6=0 \
 -p $port:3128 \
--e OVPN_FILE=$1 \
+-e OVPN_FILE="$1" \
 -v ABSOLUTEPATH/ovpn_files:/ovpn \
 squid_openvpn:1.0
