@@ -51,7 +51,7 @@ docker run -d --rm \
 -v <PATH_OF_VPN_FILES_DIRECTORY_HERE>:/ovpn \
 squid_openvpn:1.0
 ```
-*The envoriment variable* `OVPN_FILE` *is used to know which file should openvpn use
+*The envoriment variable* `OVPN_FILE` *is used to know which file should openvpn use*
 
 
 ### If everything is ok, you should see port 3128 (or anyone you chose) listening on your machine.
