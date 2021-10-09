@@ -13,34 +13,59 @@ Then, we can create a docker container with a VPN client and a proxy server runn
 ### 1. Install docker
 [See instructions here](https://docs.docker.com/engine/install/)
 
-### 2. Build and run the container
+### 2. Clone the repository
 ```
-1. Clone the repository
 git clone https://github.com/Nickguitar/VPNTabs
-
-2. Copy all your required VPN config files to the folder config_files (including credentials file, if needed)
-e.g:
-cp ~/myFiles/mullvad_config_linux/* VPNTabs/config_files
-
-3. Run the setup passing the config file your VPN will use and the local port the proxy will use (default: 3128)
-e.g:
-./setup VPNTabs/config_files/mullvad_us_all.conf
+```
+### 3. Building the docker image and the `setup.sh`
+```
+cd VPNTabs
+```
+```
+./build
+```
+*[Alternative] Building only the docker image*
+```
+cd VPNTabs
+```
+```
+./container-build.sh
+```
+### 4. Place your VPN files in the diretory `ovpn_files`
+```
+cp /path/to/vpn/file ovpn_files/
 ```
 
-The setup file will build the docker image and run the container with the correct settings.
+### 5. Running with the `setup.sh`
+```
+./setup.sh <your_vpn_file> [portnumber]
+```
+*[Alternative] Instead using* `setup.sh` *You can run your custom script or use docker-compose, here is an example:*
+```
+docker run -d --rm \
+--cap-add=NET_ADMIN \
+--device /dev/net/tun \
+--sysctl net.ipv6.conf.all.disable_ipv6=0 \
+-p 3128:3128 \
+-e OVPN_FILE=<YOUR_VPN_FILE_HERE> \
+-v <PATH_OF_VPN_FILES_DIRECTORY_HERE>:/ovpn \
+squid_openvpn:1.0
+```
+*The envoriment variable* `OVPN_FILE` *is used to know which file should openvpn use
 
-If everything is ok, you should see port 3128 (or anyone you chose) listening on your machine.
+
+###If everything is ok, you should see port 3128 (or anyone you chose) listening on your machine.
 ```
 $ netstat -tapeno | grep 3128
 tcp     0    0 0.0.0.0:3128       0.0.0.0:*    LISTEN    0   5767579  -  off (0.00/0/0)
 ```
 
-### 3. Add Multi Account Containers and Container Proxy to Firefox
+### 6. Add Multi Account Containers and Container Proxy to Firefox
 
 - [Multi Account Containers](https://addons.mozilla.org/en-US/firefox/addon/multi-account-containers/)
 - [Container Proxy](https://addons.mozilla.org/en-US/firefox/addon/container-proxy/) 
 
-### 4. Set the proxy on Container Proxy
+### 7. Set the proxy on Container Proxy
 Open Container Proxy, click on "Proxy", set protocol to HTTP, server to 127.0.0.1 and use the port you chose in step 2.3 (the default port is 3128). Also, uncheck the checkbox "Do not proxy local addresses". Then, click "save".
 
 ![image](https://user-images.githubusercontent.com/3837916/136625420-925f7d61-41c1-4b41-aa41-abea137475b7.png)
