@@ -1,14 +1,19 @@
 # VPN Container Tabs
 Force the traffic of a Firefox container tab to pass through a VPN
 
-On newer version of Firefox, it is possible to use [container tabs](https://support.mozilla.org/en-US/kb/containers), which isolate the cookies from the normal tabs. It is a good feature, since by isolating the cookies you can avoid tracking and some types of attacks that could steal your cookies, in addition to being able to log in to multiple accounts on the same website.
+On newer version of Firefox, it is possible to use [container tabs](https://support.mozilla.org/en-US/kb/containers), which isolate the cookies from the normal tabs.
 
-Furthermore, it is possible to assign different proxies to be used in different containers using [Container proxy](https://addons.mozilla.org/en-US/firefox/addon/container-proxy/).
+It is also possible to assign different proxies to be used in different containers using [Container proxy](https://addons.mozilla.org/en-US/firefox/addon/container-proxy/).
 
-Then, we can create a docker container with a VPN client and a proxy server running. By doing this, we cab assign our docker proxy to a container tab so that all the traffic of that tab goes through the VPN that is running only inside the docker container.
+Then, we can create a docker container with a VPN client and a proxy server running. By doing this, we can assign our docker proxy to a container tab so that all the traffic of that tab goes through the VPN that is running only inside the docker container.
+
+## Screenshots
+
+![image](https://user-images.githubusercontent.com/3837916/136894225-0217d6a1-0e3a-4a12-9039-dec1fa4025a0.png)
+![image](https://user-images.githubusercontent.com/3837916/136897205-98309893-bd73-4f03-8ff7-4e308f2b3c8e.png)
+
 
 ## Usage
-
 
 ### 1. Install docker
 [See instructions here](https://docs.docker.com/engine/install/)
@@ -17,45 +22,39 @@ Then, we can create a docker container with a VPN client and a proxy server runn
 ```
 git clone https://github.com/Nickguitar/VPNTabs
 ```
-**Important note:** if your user doesn't have permission to run docker containers you will need to run the scripts with `sudo`
-### 3. Building the docker image and the `setup.sh`
+**Important note:** if your user doesn't have permission to run docker containers you will need to run the script with `sudo`
+
+### 3. Place your VPN files in the diretory `ovpn_files`
 ```
-cd VPNTabs
-```
-```
-./build.sh
-```
-*[Alternative] Building only the docker image*
-```
-cd VPNTabs
-```
-```
-./container-build.sh
-```
-### 4. Place your VPN files in the diretory `ovpn_files`
-```
-cp /path/to/vpn/file ovpn_files/
+cp /path/to/vpn/files/* ovpn_files/
 ```
 
-### 5. Running with the `setup.sh`
+### 4. Build the docker image
 ```
-./setup.sh <your_vpn_file> [portnumber]
+./VPNTabs --build
 ```
-*[Alternative] Instead using* `setup.sh` *You can run your custom script or use docker-compose, here is an example:*
+### 5. Run the container with the specified ovpn file
 ```
-docker run -d --rm \
+./VPNTabs --run --file <OVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]
+e.g.:
+./VPNTabs --run --file mullvad_us_all.ovpn --port 3131 --name Mullvad_US
+```
+
+*[Alternative] Instead using* `VPNTabs` *You can run your custom script or use docker-compose. Here is an example:*
+```
+docker run -d \
 --cap-add=NET_ADMIN \
 --device /dev/net/tun \
 --sysctl net.ipv6.conf.all.disable_ipv6=0 \
 -p 3128:3128 \
--e OVPN_FILE=<YOUR_VPN_FILE_HERE> \
--v <PATH_OF_VPN_FILES_DIRECTORY_HERE>:/ovpn \
+-e OVPN_FILE=<YOUR_VPN_FILE> \
+-v <PATH_OF_VPN_FILES_DIRECTORY>:/ovpn \
 squid_openvpn:1.0
 ```
-*The envoriment variable* `OVPN_FILE` *is used to know which file should openvpn use*
+*The envoriment variable* `OVPN_FILE` *is used to know which file OpenVPN should use*
 
 
-### If everything is ok, you should see port 3128 (or anyone you chose) listening on your machine.
+### If everything is ok, you should see port 3128 (or whatever you have chosen) listening on your machine.
 ```
 $ netstat -tapeno | grep 3128
 tcp     0    0 0.0.0.0:3128       0.0.0.0:*    LISTEN    0   5767579  -  off (0.00/0/0)
@@ -87,5 +86,6 @@ Now every website you access using those container tabs will pass through your l
 ### Comments
 
 - You can generate as many containers as you want, each one running a different VPN config file. In this way, it is possible to have multiple container tabs, each with a different VPN.
-- Note that this doesn't have a kill switch. If your VPN goes down and you access some website within the container tab, your IP will be exposed. It's at your own risk.
+- To generate another container with another ovpn config file, just place the config file inside `ovpn_files` and follow step 5.
+- Note that **this doesn't have a kill switch** yet. If your VPN goes down and you access some website within the container tab, your IP will be exposed. It's at your own risk.
 - Since the VPN client is running inside a docker container, all your other network traffic isn't being tunneled through the VPN. The only connections going through the VPN are those pointing to the local proxy you've created.
