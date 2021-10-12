@@ -9,7 +9,7 @@ Then, we can create a docker container with a VPN client and a proxy server runn
 
 ## Screenshots
 
-![image](https://user-images.githubusercontent.com/3837916/136897604-a10d6cb4-4adc-4388-85a7-ce22de0a73fb.png)
+![image](https://user-images.githubusercontent.com/3837916/136898149-86ac1a47-a30e-47ee-8719-7146c3718826.png)
 ![image](https://user-images.githubusercontent.com/3837916/136897205-98309893-bd73-4f03-8ff7-4e308f2b3c8e.png)
 
 
@@ -35,9 +35,9 @@ cp /path/to/vpn/files/* ovpn_files/
 ```
 ### 5. Run the container with the specified ovpn file
 ```
-./VPNTabs --run --file <OVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]
+./VPNTabs --run <OVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]
 e.g.:
-./VPNTabs --run --file mullvad_us_all.ovpn --port 3131 --name Mullvad_US
+./VPNTabs --run mullvad_us_all.ovpn --port 3131 --name Mullvad_US
 ```
 
 *[Alternative] Instead using* `VPNTabs` *You can run your custom script or use docker-compose. Here is an example:*
