@@ -10,7 +10,8 @@ Then, we can create a docker container with a VPN client and a proxy server runn
 ## Screenshots
 
 ![image](https://user-images.githubusercontent.com/3837916/136898149-86ac1a47-a30e-47ee-8719-7146c3718826.png)
-![image](https://user-images.githubusercontent.com/3837916/136897205-98309893-bd73-4f03-8ff7-4e308f2b3c8e.png)
+![image](https://user-images.githubusercontent.com/3837916/137136513-26b4cd53-c8cc-4486-94e1-92d16332bdc0.png)
+
 
 
 ## Usage
