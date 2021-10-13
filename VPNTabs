@@ -107,7 +107,7 @@ build(){
 }
 
 list_containers(){
-	echo "NAME		PORT	CREATED		STATUS		CONTAINER ID"
+	echo "CONTAINER ID  PORT    CREATED     STATUS      NAME"
 	sudo docker ps -a  | grep "squid_openvpn" | sed -E "s/0.0.0.0:|->3128\/tcp//g" | sed -E "s/( {2,})/;/g" | awk -F';' '{ print $1 "\t" $6 "\t" $4 "\t" $5 "\t" $7 }'
 }
 
