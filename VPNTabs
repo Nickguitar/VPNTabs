@@ -4,6 +4,8 @@
 # 12/10/21
 
 port=3128
+tor_port=9050
+tor=0
 
 green="\033[0;32m"
 red="\033[0;31m"
@@ -29,7 +31,7 @@ banner(){
 banner
 
 help_banner(){
-	echo -e "Usage:\n\n - Build image:\n$0 --build\n\n - Run container:\n$0 --run --file <OPENVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]\n"
+	echo -e "Usage:\n\n - Build image:\n$0 --build\n\n - Run container:\n$0 --run <OPENVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]\n"
 	echo "Options:"
 	echo "   -h, --help				See this help message"
 	echo "   -b, --build				Build the docker image"
@@ -37,13 +39,15 @@ help_banner(){
 	echo "   -n, --name <NAME>			Container name (optional)"
 	echo "   -p, --port <PORT>			Proxy port (default: 3128)"
 	echo "   -r, --run <FILE>			Run the docker container with the specified file"
+	echo "   -t, --tor 				Run the docker container with TOR Proxy"
 	echo "   --delete <CONTAINER NAME|ID>		Delete container"
 	echo "   --start <CONTAINER NAME|ID>		Start a container"
 	echo "   --stop <CONTAINER NAME|ID>		Stop a container"
 	echo ""
 	echo "Usage examples:"
 	echo " $ $0 --build					Build the image"
-	echo " $ $0 -r -f us2957.nordvpn.com -n Nord_US	Run the container w/ NordVPN config file"
+	echo " $ $0 -r us2957.nordvpn.com -n Nord_US		Run the container w/ NordVPN config file"
+	echo " $ $0 -r --tor --name tor 			Run the container w/ tor"
 	echo ""
 	exit
 }
@@ -68,26 +72,44 @@ checkfile(){
 }
 
 run_container(){
-	if [ ! "$1" ]; then
-		echo -e "${red}[-] Choose a ovpn config file from ovpn_files with -f <filename.ovpn>${reset}"
+	if [[ ! "$1" && ! "$tor" ]]; then
+		echo -e "${red}[-] Choose a ovpn config file from ovpn_files with -f <filename.ovpn>, or use --run --tor to run with TOR Proxy.${reset}"
 		exit
 	fi
 
-	docker_run=$(sudo docker run -d \
+	if [[ "$1" == "--tor" || "$1" == "-t" ]]; then
+		filename=empty
+	fi
+
+	random_string=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 5)
+
+	docker_run=$(sudo docker run -dit \
 	--cap-add=NET_ADMIN \
 	--device /dev/net/tun \
 	--sysctl net.ipv6.conf.all.disable_ipv6=0 \
-	-p "$3":3128 \
-	--name "$2" \
-	-e OVPN_FILE=$(basename "$1") \
+	$(if [[ $tor ]]; then echo "-p $tor_port:9050";else echo "-p $3:3128";fi) \
+	$(if [[ $tor ]]; then echo "--name tor_${random_string}";else echo "--name '$2'";fi)\
+	-e OVPN_FILE=$(basename "$filename") \
+	-e TOR_CONTAINER="$4" \
 	-v $(dirname $(realpath "$0"))/ovpn_files:/ovpn \
 	squid_openvpn:1.0 2>&1)
 
 	if [ $? -eq 0 ]; then
-		echo -e "${green}[+] Proxy server is running on ${white}127.0.0.1:$3${green} with ${white}"$(basename $1)${reset}
+		echo -e "${green}[+] Proxy server is running on ${white}127.0.0.1:"$(if [[ $tor ]]; then echo "${tor_port}${green} with ${white}TOR"; else echo "$3${green} with ${white}$(basename $1)"; fi)${reset}
 	else
 		if [[ $(echo $docker_run | grep "Unable to find image") ]]; then
 			echo -e "${red}[-] You have to build the docker image before running it. Use -b to build.${reset}"
+			exit 7359
+		fi
+
+		container_id=$(sudo docker ps -a | grep Created | cut -d " " -f 1)
+		if [[ $container_id ]]; then
+			container_start=$(sudo docker container start "$container_id" 2>&1 > /dev/null)
+		fi
+
+		if [[ $(echo "$container_start" | grep "already allocated") ]]; then
+			echo -e "${red}[-] Port already allocated. Choose another port with --port <port>.${reset}"
+			sudo docker rm -f "$container_id" > /dev/null
 			exit 7359
 		fi
 		echo -e "${red}[-] Couldn't run docker container.${reset}"
@@ -107,7 +129,7 @@ build(){
 }
 
 list_containers(){
-	echo "CONTAINER ID  PORT    CREATED     STATUS      NAME"
+	echo "CONTAINER ID	PORT	CREATED		STATUS		NAME"
 	sudo docker ps -a  | grep "squid_openvpn" | sed -E "s/0.0.0.0:|->3128\/tcp//g" | sed -E "s/( {2,})/;/g" | awk -F';' '{ print $1 "\t" $6 "\t" $4 "\t" $5 "\t" $7 }'
 }
 
@@ -144,6 +166,7 @@ while [ "$1" != "" ]; do
         -p | --port )
             shift
             port="$1"
+            tor_port="$1"
             checkport "$port" ;;
 
         -h | --help ) help_banner ;;
@@ -152,16 +175,16 @@ while [ "$1" != "" ]; do
         	shift
         	name="$1" ;;
 
-#        -f | --file )
- #       	shift
-  #      	filename="$1"
-   #     	checkfile "$filename" ;;
-
         -r | --run )
         	shift
         	filename="$1"
-        	checkfile "$filename"
+        	if [[ "$filename" == "--tor" || "$filename" == "-t" ]]; then
+				tor=yes
+        	fi
         	run=1 ;;
+
+        -t | --tor )
+        	tor=yes ;;
 
         -l | --list )
         	list=1 ;;
@@ -185,7 +208,10 @@ while [ "$1" != "" ]; do
 done
 
 if [[ $run ]]; then
-	run_container "$filename" "$name" "$port"
+	if [[ ! $tor ]]; then
+		checkfile "$filename"
+	fi
+	run_container "$filename" "$name" "$port" "$tor" "$tor_port"
 	exit
 elif [[ $list ]]; then
 	list_containers
@@ -193,5 +219,4 @@ elif [[ "$1" == "" ]]; then
 	echo -e " - Build image:\n$0 --build\n\n - Run container:\n$0 --run <OPENVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]\n\nFor more information, use --help"
 else
 	echo -e "${orange}[!] If you want to run the container, use --run.${reset}"
-fi
-
+fi 
