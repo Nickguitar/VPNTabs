@@ -1,5 +1,5 @@
 # VPN Container Tabs
-Force the traffic of a Firefox container tab to pass through a VPN
+Force the traffic of a Firefox container tab to pass through a VPN or Tor
 
 On newer version of Firefox, it is possible to use [container tabs](https://support.mozilla.org/en-US/kb/containers), which isolate the cookies from the normal tabs.
 
@@ -34,11 +34,12 @@ cp /path/to/vpn/files/* ovpn_files/
 ```
 ./VPNTabs --build
 ```
-### 5. Run the container with the specified ovpn file
+### 5. Run the container with the specified ovpn file or with --tor
 ```
-./VPNTabs --run <OVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]
+./VPNTabs --run [<OVPN FILE>] [--tor] [--port <PORT>] [--name <CONTAINER NAME>]
 e.g.:
 ./VPNTabs --run mullvad_us_all.ovpn --port 3131 --name Mullvad_US
+./VPNTabs --run --tor --name Tor
 ```
 
 *[Alternative] Instead using* `VPNTabs` *You can run your custom script or use docker-compose. Here is an example:*
@@ -55,7 +56,7 @@ squid_openvpn:1.0
 *The envoriment variable* `OVPN_FILE` *is used to know which file OpenVPN should use*
 
 
-### If everything is ok, you should see port 3128 (or whatever you have chosen) listening on your machine.
+### If everything is ok, you should see port 3128 (or whatever you have chosen) listening on your machine. If you chose Tor, you should see port 9050.
 ```
 $ netstat -tapeno | grep 3128
 tcp     0    0 0.0.0.0:3128       0.0.0.0:*    LISTEN    0   5767579  -  off (0.00/0/0)
@@ -67,7 +68,9 @@ tcp     0    0 0.0.0.0:3128       0.0.0.0:*    LISTEN    0   5767579  -  off (0.
 - [Container Proxy](https://addons.mozilla.org/en-US/firefox/addon/container-proxy/) 
 
 ### 7. Set the proxy on Container Proxy
-Open Container Proxy, click on "Proxy", set protocol to HTTP, server to 127.0.0.1 and use the port you chose in step 2.3 (the default port is 3128). Also, uncheck the checkbox "Do not proxy local addresses". Then, click "save".
+Open Container Proxy, click on "Proxy", set protocol to HTTP, server to 127.0.0.1 and use the port you chose in step 2.3 (the default port is 3128; for Tor, the default is 9050). Also, uncheck the checkbox "Do not proxy local addresses". Then, click "save".
+
+_Note: For Tor, you need to change the proxy protocol for Socks5_
 
 ![image](https://user-images.githubusercontent.com/3837916/136625420-925f7d61-41c1-4b41-aa41-abea137475b7.png)
 
