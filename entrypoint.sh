@@ -1,5 +1,5 @@
 #!/bin/bash
-if [[ $TOR_CONTAINER ]]; then
+if [[ $TOR_CONTAINER == "yes" ]]; then
 	tor -f /etc/tor/torrc
 else
 	service squid start squid
