@@ -72,7 +72,7 @@ checkfile(){
 }
 
 run_container(){
-	if [[ ! "$1" && ! "$tor" ]]; then
+	if [[ ! "$1" && ! "$tor" == "yes" ]]; then
 		echo -e "${red}[-] Choose a ovpn config file from ovpn_files with -f <filename.ovpn>, or use --run --tor to run with TOR Proxy.${reset}"
 		exit
 	fi
@@ -87,15 +87,15 @@ run_container(){
 	--cap-add=NET_ADMIN \
 	--device /dev/net/tun \
 	--sysctl net.ipv6.conf.all.disable_ipv6=0 \
-	$(if [[ $tor ]]; then echo "-p $tor_port:9050";else echo "-p $3:3128";fi) \
-	$(if [[ $tor ]]; then echo "--name tor_${random_string}";else echo "--name '$2'";fi)\
+	$(if [[ $tor == "yes" ]]; then echo "-p $tor_port:9050";else echo "-p $3:3128";fi) \
+	$(if [[ $tor == "yes" ]]; then echo "--name tor_${random_string}";else echo "--name $2";fi)\
 	-e OVPN_FILE=$(basename "$filename") \
 	-e TOR_CONTAINER="$4" \
 	-v $(dirname $(realpath "$0"))/ovpn_files:/ovpn \
 	squid_openvpn:1.0 2>&1)
 
 	if [ $? -eq 0 ]; then
-		echo -e "${green}[+] Proxy server is running on ${white}127.0.0.1:"$(if [[ $tor ]]; then echo "${tor_port}${green} with ${white}TOR"; else echo "$3${green} with ${white}$(basename $1)"; fi)${reset}
+		echo -e "${green}[+] Proxy server is running on ${white}127.0.0.1:"$(if [[ $tor == "yes" ]]; then echo "${tor_port}${green} with ${white}TOR"; else echo "$3${green} with ${white}$(basename $1)"; fi)${reset}
 	else
 		if [[ $(echo $docker_run | grep "Unable to find image") ]]; then
 			echo -e "${red}[-] You have to build the docker image before running it. Use -b to build.${reset}"
@@ -208,7 +208,7 @@ while [ "$1" != "" ]; do
 done
 
 if [[ $run ]]; then
-	if [[ ! $tor ]]; then
+	if [[ $tor != "yes" ]]; then
 		checkfile "$filename"
 	fi
 	run_container "$filename" "$name" "$port" "$tor" "$tor_port"
@@ -219,4 +219,4 @@ elif [[ "$1" == "" ]]; then
 	echo -e " - Build image:\n$0 --build\n\n - Run container:\n$0 --run <OPENVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]\n\nFor more information, use --help"
 else
 	echo -e "${orange}[!] If you want to run the container, use --run.${reset}"
-fi 
+fi  
