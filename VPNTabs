@@ -121,7 +121,7 @@ build(){
 	echo -e "${green}[*] Building the docker image... Be patient...${reset}"
 	sudo docker build -t squid_openvpn:1.0 .
 	if [ $? -eq 0 ]; then
-		echo -e "${green}[+] Image built! Use $0 --run --file <ovpn file> to run with the selected file.${reset}"
+		echo -e "${green}[+] Image built! Use $0 --run <ovpn file> to run with the selected file.${reset}"
 	else
 		echo -e "${red}[-] Could't build docker image...${reset}"
 	fi
