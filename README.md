@@ -92,3 +92,7 @@ Now every website you access using those container tabs will pass through your l
 - To generate another container with another ovpn config file, just place the config file inside `ovpn_files` and follow step 5.
 - Note that **this doesn't have a kill switch** yet. If your VPN goes down and you access some website within the container tab, your IP will be exposed. It's at your own risk.
 - Since the VPN client is running inside a docker container, all your other network traffic isn't being tunneled through the VPN. The only connections going through the VPN are those pointing to the local proxy you've created.
+
+### Video
+
+[![image](https://user-images.githubusercontent.com/3837916/139519441-5124bb99-3460-4ef6-8959-fc3a2f2c5e6e.png)](https://www.youtube.com/watch?v=1JmR-XJ0Ug0)
