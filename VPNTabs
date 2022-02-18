@@ -88,7 +88,7 @@ run_container(){
 	--device /dev/net/tun \
 	--sysctl net.ipv6.conf.all.disable_ipv6=0 \
 	$(if [[ $tor == "yes" ]]; then echo "-p $tor_port:9050";else echo "-p $3:3128";fi) \
-	$(if [[ $tor == "yes" ]]; then echo "--name tor_${random_string}";else echo "--name $2";fi)\
+	$(if [[ $tor == "yes" ]]; then echo "--name tor_${random_string}";fi)\
 	-e OVPN_FILE=$(basename "$filename") \
 	-e TOR_CONTAINER="$4" \
 	-v $(dirname $(realpath "$0"))/ovpn_files:/ovpn \
