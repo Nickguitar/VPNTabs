@@ -1,10 +1,18 @@
-FROM debian
-RUN apt -qq -y update && apt install -qq -y openvpn squid tor
-RUN ln -s /dev/null /var/log/squid/access.log
-COPY ./squid.conf /etc/squid/squid.conf
-COPY ./entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+FROM alpine
+RUN apk --no-cache update && apk --no-cache upgrade
+RUN apk --no-cache add \
+    openvpn \ 
+    squid \
+    openresolv \
+    bash \
+    gettext \
+    runit \
+    tor
+COPY app /app
+RUN mkdir /etc/squid/conf.d
+RUN touch /etc/squid/conf.d/squid
 RUN echo "SocksPort 0.0.0.0:9050" > /etc/tor/torrc
 RUN mkdir /ovpn/
 WORKDIR "/ovpn"
-ENTRYPOINT ["/entrypoint.sh"]
+ENV LAN =
+ENTRYPOINT ["runsvdir", "/app"]
