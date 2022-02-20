@@ -1,0 +1,5 @@
+#!/bin/bash
+if [[ $TOR_CONTAINER != "yes" ]]; then
+	ln -s /ovpn/* /app/openvpn/
+    openvpn --config "/ovpn/$OVPN_FILE"
+fi
