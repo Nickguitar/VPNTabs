@@ -1,11 +1,12 @@
 #!/bin/bash
 # Nicholas Ferreira - github.com/Nickguitar
 # Gabriel Belli - github.com/gabrielbelli
-# 12/10/21
+# 26/02/22
 
 port=3128
 tor_port=9050
-tor=0
+vpn_user=''
+vpn_password=''
 
 green="\033[0;32m"
 red="\033[0;31m"
@@ -28,6 +29,15 @@ banner(){
 	echo -e "        Use \033[0;33mFirefox\033[0m container\n            tabs with VPN\n  Nicholas Ferreira & Gabriel Belli\n"
 }
 
+ask(){
+    echo -n "User (input hidden): "
+    read -s vpn_user
+    echo ""
+    echo -n "Password (input hidden): "
+    read -s vpn_password
+    echo ""
+}
+
 banner
 
 help_banner(){
@@ -37,10 +47,13 @@ help_banner(){
 	echo "   -b, --build				Build the docker image"
 	echo "   -l, --list				List containers"
 	echo "   -n, --name <NAME>			Container name (optional)"
-	echo "   -p, --port <PORT>			Proxy port (default: 3128)"
+	echo "   -p, --port <PORT>			Proxy port (VPN default: 3128 | TOR default: 9050)"
+    echo "   -m, --map          Map port to host (like docker run -p)"
 	echo "   -r, --run <FILE>			Run the docker container with the specified file"
 	echo "   -t, --tor 				Run the docker container with TOR Proxy"
-	echo "   --delete <CONTAINER NAME|ID>		Delete container"
+    echo "   -c, --ask-credentials  Ask VPN credentials (if your ovpn file doesn't contain it)"
+    echo "   -v, --verbose          Guess what!"
+    echo "   --delete <CONTAINER NAME|ID>		Delete container"
 	echo "   --start <CONTAINER NAME|ID>		Start a container"
 	echo "   --stop <CONTAINER NAME|ID>		Stop a container"
 	echo ""
@@ -72,7 +85,7 @@ checkfile(){
 }
 
 run_container(){
-	if [[ ! "$1" && ! "$tor" == "yes" ]]; then
+	if [[ ! "$1" && ! $tor ]]; then
 		echo -e "${red}[-] Choose a ovpn config file from ovpn_files with -f <filename.ovpn>, or use --run --tor to run with TOR Proxy.${reset}"
 		exit
 	fi
@@ -83,20 +96,28 @@ run_container(){
 
 	random_string=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 5)
 
-	docker_run=$(sudo docker run -dit \
+	docker_run=$(sudo docker run -d --rm \
 	--cap-add=NET_ADMIN \
 	--device /dev/net/tun \
 	--sysctl net.ipv6.conf.all.disable_ipv6=0 \
-	$(if [[ $tor == "yes" ]]; then echo "-p $tor_port:9050";else echo "-p $3:3128";fi) \
-	$(if [[ $tor == "yes" ]]; then echo "--name tor_${random_string}";fi)\
-	-e OVPN_FILE=$(basename "$filename") \
+    $(if [ $portmap ];then if [ $tor ];then echo "-p $tor_port:9050";else echo "-p $port:3128";fi;fi ) \
+	$(if [ $tor ]; then echo "--name tor_${random_string}";elif [ $2 ]; then echo "--name ${2}";fi) \
+    -e OVPN_FILE=$(basename "$filename") \
 	-e TOR_CONTAINER="$4" \
+    -e VPN_USER="$vpn_user" \
+    -e VPN_PASSWORD="$vpn_password" \
 	-v $(dirname $(realpath "$0"))/ovpn_files:/ovpn \
-	squid_openvpn:1.0 2>&1)
-
+	squid_openvpn)
 	if [ $? -eq 0 ]; then
-		echo -e "${green}[+] Proxy server is running on ${white}127.0.0.1:"$(if [[ $tor == "yes" ]]; then echo "${tor_port}${green} with ${white}TOR"; else echo "$3${green} with ${white}$(basename $1)"; fi)${reset}
-	else
+        ip="127.0.0.1"
+        if [ ! $portmap ]; then 
+            ip=$(sudo docker exec ${docker_run} ip -f inet addr show eth0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+        fi
+        echo -e "${green}[+] Proxy server is running on ${white}${ip}:"$(if [ $tor ]; then echo "${tor_port}${green} with ${white}TOR"; else echo "$3${green} with ${white}$(basename $1)"; fi)${reset}
+        echo ""
+        echo -e "${white}Container id: " ${docker_run:0:12}
+	
+    else
 		if [[ $(echo $docker_run | grep "Unable to find image") ]]; then
 			echo -e "${red}[-] You have to build the docker image before running it. Use -b to build.${reset}"
 			exit 7359
@@ -108,7 +129,7 @@ run_container(){
 		fi
 
 		if [[ $(echo "$container_start" | grep "already allocated") ]]; then
-			echo -e "${red}[-] Port already allocated. Choose another port with --port <port>.${reset}"
+			echo -e "${red}[-] Port already allocated. Choose another port with -p <port>.${reset}"
 			sudo docker rm -f "$container_id" > /dev/null
 			exit 7359
 		fi
@@ -119,7 +140,7 @@ run_container(){
 
 build(){
 	echo -e "${green}[*] Building the docker image... Be patient...${reset}"
-	sudo docker build -t squid_openvpn:1.0 .
+	sudo docker build -t squid_openvpn .
 	if [ $? -eq 0 ]; then
 		echo -e "${green}[+] Image built! Use $0 --run <ovpn file> to run with the selected file.${reset}"
 	else
@@ -169,6 +190,9 @@ while [ "$1" != "" ]; do
             tor_port="$1"
             checkport "$port" ;;
 
+        -m | --map )
+        	portmap=1 ;;
+
         -h | --help ) help_banner ;;
 
         -n | --name )
@@ -179,12 +203,18 @@ while [ "$1" != "" ]; do
         	shift
         	filename="$1"
         	if [[ "$filename" == "--tor" || "$filename" == "-t" ]]; then
-				tor=yes
+				tor=1
         	fi
         	run=1 ;;
 
         -t | --tor )
-        	tor=yes ;;
+        	tor=1 ;;
+
+        -c | --ask-credentials )
+        	ask ;;
+
+        -v | --verbose )
+            set -x ;;
 
         -l | --list )
         	list=1 ;;
@@ -208,7 +238,7 @@ while [ "$1" != "" ]; do
 done
 
 if [[ $run ]]; then
-	if [[ $tor != "yes" ]]; then
+	if [[ ! $tor ]]; then
 		checkfile "$filename"
 	fi
 	run_container "$filename" "$name" "$port" "$tor" "$tor_port"
