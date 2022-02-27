@@ -1,5 +1,5 @@
 #!/bin/bash
-if [[ $TOR_CONTAINER != "yes" ]]; then
+if [[ ! $TOR_CONTAINER ]]; then
     export TEMP_DIR="$(mktemp -d)"
     while [[ $(ip -f inet addr show tun0 2>/dev/null| wc -l) == 0 ]]; do true;done
     export env VPN_IP="$(ip -f inet addr show tun0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')"
