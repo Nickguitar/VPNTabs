@@ -1,0 +1,4 @@
+#!/bin/bash
+if [[ $TOR_CONTAINER ]]; then
+	tor -f /etc/tor/torrc
+fi

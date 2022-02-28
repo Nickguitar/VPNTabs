@@ -1,0 +1,12 @@
+#!/bin/bash
+if [[ ! $TOR_CONTAINER ]]; then
+    cp -R /ovpn/* /app/openvpn/
+    if [[ $VPN_USER ]]; then
+        login="/app/openvpn/login.txt"
+        echo -e "$VPN_USER" > "$login"
+        echo -e "$VPN_PASSWORD" >> "$login"
+        chmod 600 "$login"
+        echo "auth-user-pass ${login}" >> /app/openvpn/$OVPN_FILE
+    fi
+    openvpn --config "/app/openvpn/$OVPN_FILE"
+fi

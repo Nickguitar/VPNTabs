@@ -1,0 +1,13 @@
+#!/bin/bash
+if [[ ! $TOR_CONTAINER ]]; then
+    export TEMP_DIR="$(mktemp -d)"
+    while [[ $(ip -f inet addr show tun0 2>/dev/null| wc -l) == 0 ]]; do true;done
+    export env VPN_IP="$(ip -f inet addr show tun0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')"
+    envsubst </app/squid/squid.conf >"${TEMP_DIR}/config"
+    squid -f "${TEMP_DIR}/config"
+    gw=$(ip route | awk '/default/ {print $3}')
+    ip route add to 10.0.0.0/8 via $gw dev eth0
+    ip route add to 172.16.0.0/12 via $gw dev eth0
+    ip route add to 192.168.0.0/16 via $gw dev eth0
+fi
+
