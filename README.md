@@ -42,7 +42,7 @@ e.g.:
 ./VPNTabs --run --tor
 ```
 
-*[Alternative] Instead using* `VPNTabs` *You can run your custom script or use docker-compose. Here is an example:*
+*[Alternative] Instead of using* `VPNTabs`, *you can run your custom script or use docker-compose. Here is an example:*
 ```
 # To run q VPN container
 docker run -d \
@@ -50,11 +50,11 @@ docker run -d \
 --device /dev/net/tun \
 --sysctl net.ipv6.conf.all.disable_ipv6=0 \
 -p "3128:3128" \
---name "<NAME YOUR CONTAINER>" \
+--name "<NAME OF YOUR CONTAINER>" \
 -e OVPN_FILE="<YOUR VPN FILE NAME>" \
 -e VPN_USER="<YOUR VPN USER>" \
 -e VPN_PASSWORD="YOUR VPN PASSWORD" \
--v ""<PATH/TO/YOUR/VPN/FILES/FOLDER>:/ovpn" \
+-v "<PATH/TO/YOUR/VPN/FILES/FOLDER>:/ovpn" \
 squid_openvpn
 
 # To run a TOR container
@@ -64,11 +64,11 @@ docker run -d \
 -e TOR_CONTAINER="1" \
 squid_openvpn
 ```
-*The envoriment variable* `OVPN_FILE` *is used to know which file OpenVPN should use*
+*The envoriment variable* `OVPN_FILE` *is used to know which file OpenVPN should use*.
 
-*For docker-compose you can use `docker-compose-ylm` configs are well documented in the `docker-compose.ylm`*
+*For docker-compose you can use `docker-compose-ylm`. Configs are well documented in the `docker-compose.ylm` file*
 
-### If everything is ok, you should see this output
+### If everything is ok, you should see this output:
 ```
 $ ./VPNTabs --run ovpn_files/mullvad_br_sao.conf
 
@@ -104,9 +104,9 @@ Now every website you access using those container tabs will pass through your l
 
 - You can generate as many containers as you want, each one running a different VPN config file. In this way, it is possible to have multiple container tabs, each with a different VPN.
 - To generate another container with another ovpn config file, just place the config file inside `ovpn_files` and follow step 5.
-- VPNTabs has a kill switch which is built into its proxy. When connected to a VPN, VPNTabs uses Squid Proxy, which is configured to only use VPN's interface as gateway. When using TOR instead VPN, the TOR proxy won't route if TOR network is down anyway.
+- VPNTabs has a built in kill switch into its proxy. When connected to a VPN, VPNTabs uses Squid Proxy, which is configured to only use VPN's interface as gateway. When using TOR instead VPN, the TOR proxy won't route if TOR network is down anyway.
 - Since the VPN client is running inside a docker container, all your other network traffic isn't being tunneled through the VPN. The only connections going through the VPN are those pointing to the local proxy you've created.
 
 ### Video
 
-[![image](https://user-images.githubusercontent.com/3837916/139519441-5124bb99-3460-4ef6-8959-fc3a2f2c5e6e.png)](https://www.youtube.com/watch?v=1JmR-XJ0Ug0
+[![image](https://user-images.githubusercontent.com/3837916/139519441-5124bb99-3460-4ef6-8959-fc3a2f2c5e6e.png)](https://www.youtube.com/watch?v=1JmR-XJ0Ug0)
