@@ -14,4 +14,4 @@ RUN mkdir /etc/squid/conf.d
 RUN touch /etc/squid/conf.d/squid
 RUN echo "SocksPort 0.0.0.0:9050" > /etc/tor/torrc
 RUN mkdir /ovpn/
-ENTRYPOINT ["runsvdir", "/app"]
+CMD ["runsvdir", "/app"]
