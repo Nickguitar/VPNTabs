@@ -1,0 +1,104 @@
+###############################################################
+#                   !!! IMPORTANT !!!                         #
+#         It is recommended to keep this comments!            #
+#   Unless you have some good experience with docker-compose  #
+###############################################################
+#
+#
+# VPNTabs
+# Nicholas Ferreira - github.com/Nickguitar
+# Gabriel Belli - github.com/gabrielbelli
+#
+#
+#services:
+#
+#  EXAMPLE_VPN:                                   #
+#    image: squid_openvpn                         #
+#    volumes:                                     # <-- NEEDED:
+#      - /path/to/vpn/files/folder:/ovpn          # <-- Volume to mount you ovpn files in the container
+#    ports:                                       # <-- OPTIONAL: use this if you want to map port to host
+#      - "3128:3128"                              # <-- Map squid port to host
+#    cap_add:                                     #   |\
+#      - NET_ADMIN                                #   | \   +-----------------------------+
+#    devices:                                     # --|  \  |     DO NOT CHANGE THIS!     |
+#      - /dev/net/tun                             # --|  /  | IT IS NEEDED TO VPN TO WORK |
+#    sysctls:                                     #   | /   +-----------------------------+
+#      - net.ipv6.conf.all.disable_ipv6: 0        #   |/
+#    restart: always                              # <-- You can change if you want
+#    environment:                                 # <-- Environments variables to config the VPN:
+#      OVPN_FILE: "<PUT YOUR VPN FILE NAME HERE!>"# <-- NEEDED: put your ovpn file name
+#      VPN_USER: "<PUT YOUR VPN USER HERE!>"      # <-- CONDITIONAL: if your vpn files do not include password
+#      VPN_PASSWORD: "<AND PASSWORD HERE!>"       #                and you need to put it manually
+#    networks:                                    # +------------------------------------------+
+#      vpnbr:                                     # | You can change if you want, you can      |
+#        ipv4_address: 10.73.59.2                 # | even use default or any existing network |
+#                                                 # +------------------------------------------+
+#
+#  EXAMPLE_TOR:                                   #
+#    image: squid_openvpn                         #
+#    ports:                                       # <-- OPTIONAL: if you want to map port to host
+#      - "9050:9050"                              # <-- Map TOR port to host
+#    restart: always                              # <-- You can change if you want
+#    environment:                                 # <-- Environments variables to run TOR:
+#      TOR_CONTAINER: "1"                         # <-- NEEDED TO RUN TOR
+#    networks:                                    # +------------------------------------------+
+#      vpnbr:                                     # | You can change if you want, you can      |
+#        ipv4_address: 10.73.59.4                 # | even use default or any existing network |
+#                                                 # +------------------------------------------+
+#
+#networks:                                        # 
+#  vpnbr:                                         #   |\   +--------------------------------+
+#    driver: bridge                               # --| \  | Also feel free to change       |
+#    ipam:                                        # --| /  | if you know what you are doing |
+#     config:                                     #   |/   +--------------------------------+
+#       - subnet: 10.73.59.0/16                   #
+#
+# Remember to keep spaces in the YAML syntax as it is above
+#
+#-------------------------------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------------------------------
+#
+# !!! CHANGE BELOW HERE: !!!
+#
+# Put your VPN container config down here!
+#  VPN:
+#    image: squid_openvpn
+#    volumes:
+#      - /path/to/vpn/files/folder:/ovpn
+#    ports:
+#      - "3128:3128"
+#    cap_add:
+#      - NET_ADMIN
+#    devices:
+#      - /dev/net/tun
+#    sysctls:
+#      - net.ipv6.conf.all.disable_ipv6: 0
+#    restart: always
+#    environment:
+#      OVPN_FILE: "<PUT YOUR VPN FILE NAME HERE!>"
+#      VPN_USER: "<PUT YOUR VPN USER HERE!>"
+#      VPN_PASSWORD: "<AND PASSWORD HERE!>"
+#    networks:
+#      vpnbr:
+#        ipv4_address: 10.73.59.2
+
+# Working example with TOR
+services:
+  TOR:
+    image: squid_openvpn
+#    ports:
+#      - "9050:9050"
+    restart: always
+    environment:
+      TOR_CONTAINER: "1"
+    networks:
+      vpnbr:
+        ipv4_address: 10.73.59.3
+
+# Network config
+networks:
+  vpnbr:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.73.59.0/16
