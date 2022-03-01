@@ -41,14 +41,15 @@ ask(){
 banner
 
 help_banner(){
-	echo -e "Usage:\n\n - Build image:\n$0 --build\n\n - Run container:\n$0 --run <OPENVPN FILE> [--port <PORT>] [--name <CONTAINER NAME>]\n"
+	echo -e "Usage:\n\n - Build image:\n$0 --build\n\n - Run a VPN container:\n$0 --run <OPENVPN FILE> [--map] [--port <PORT>] [--name <CONTAINER NAME>] [--ask-credendials]"
+    echo -e "\n - Run a TOR container:\n$0 --run --tor [--map] [--port <PORT>]\n"
 	echo "Options:"
 	echo "   -h, --help				See this help message"
 	echo "   -b, --build				Build the docker image"
 	echo "   -l, --list				List containers"
 	echo "   -n, --name <NAME>			Container name (optional)"
-	echo "   -p, --port <PORT>			Proxy port (VPN default: 3128 | TOR default: 9050)"
     echo "   -m, --map				Map port to host (like docker run -p)"
+    echo "   -p, --port <PORT>			Proxy port (VPN default: 3128 | TOR default: 9050) (-m,--map required)"
 	echo "   -r, --run <FILE>			Run the docker container with the specified file"
 	echo "   -t, --tor 				Run the docker container with TOR Proxy"
     echo "   -c, --ask-credentials		Ask VPN credentials (if your ovpn file doesn't contain it)"
@@ -90,16 +91,18 @@ run_container(){
 		exit
 	fi
 
-	if [[ "$1" == "--tor" || "$1" == "-t" ]]; then
+	if [[ $tor ]]; then
 		filename=empty
+        protocol='socks://'
+        echo_port=$torport
+    else
+        vpn_args='--cap-add=NET_ADMIN --device /dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=0'
+        protocol='http://'
+        echo_port=$port
 	fi
 
 	random_string=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 5)
-
-	docker_run=$(sudo docker run -d \
-	--cap-add=NET_ADMIN \
-	--device /dev/net/tun \
-	--sysctl net.ipv6.conf.all.disable_ipv6=0 \
+	docker_run=$(sudo docker run -d $vpn_args \
     $(if [ $portmap ];then if [ $tor ];then echo "-p $tor_port:9050";else echo "-p $port:3128";fi;fi ) \
 	$(if [ $tor ]; then echo "--name tor_${random_string}";elif [ $2 ]; then echo "--name ${2}";fi) \
     -e OVPN_FILE=$(basename "$filename") \
@@ -107,13 +110,13 @@ run_container(){
     -e VPN_USER="$vpn_user" \
     -e VPN_PASSWORD="$vpn_password" \
 	-v $(dirname $(realpath "$0"))/ovpn_files:/ovpn \
-	squid_openvpn)
+    squid_openvpn)
 	if [ $? -eq 0 ]; then
         ip="127.0.0.1"
         if [ ! $portmap ]; then 
             ip=$(sudo docker exec ${docker_run} ip -f inet addr show eth0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
         fi
-        echo -e "${green}[+] Proxy server is running on ${white}${ip}:"$(if [ $tor ]; then echo "${tor_port}${green} with ${white}TOR"; else echo "$3${green} with ${white}$(basename $1)"; fi)${reset}
+        echo -e "${green}[+] Proxy server is running on ${white}${protocol}${ip}:${echo_port}"$(if [ $tor ]; then echo "${green} with ${white}TOR"; else echo "${green} with ${white}$(basename $1)"; fi)${reset}
         echo ""
         echo -e "${white}Container id: " ${docker_run:0:12}
 	
