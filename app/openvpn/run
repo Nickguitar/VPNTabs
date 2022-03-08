@@ -8,5 +8,22 @@ if [[ ! $TOR_CONTAINER ]]; then
         chmod 600 "$login"
         echo "auth-user-pass ${login}" >> /app/openvpn/$OVPN_FILE
     fi
-    openvpn --config "/app/openvpn/$OVPN_FILE"
+    openvpn --config "/app/openvpn/$OVPN_FILE" --group openvpn
+    # Flush the tables. This may cut the system's internet.
+    iptables -F
+
+    # Let the VPN client communicate with the outside world.
+    iptables -A OUTPUT -j ACCEPT -m owner --gid-owner openvpn
+    
+    # The loopback device is harmless, and TUN is required for the VPN.
+    iptables -A OUTPUT -j ACCEPT -o lo
+    iptables -A OUTPUT -j ACCEPT -o tun+
+
+    # We should permit replies to traffic we've sent out.
+    iptables -A INPUT -j ACCEPT -m state --state ESTABLISHED
+
+    # The default policy, if no other rules match, is to refuse traffic.
+    iptables -P OUTPUT DROP
+    iptables -P INPUT DROP
+
 fi

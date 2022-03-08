@@ -49,20 +49,20 @@ docker run -d \
 --cap-add=NET_ADMIN \
 --device /dev/net/tun \
 --sysctl net.ipv6.conf.all.disable_ipv6=0 \
--p "3128:3128" \
+-p "9050:9050" \
 --name "<NAME OF YOUR CONTAINER>" \
 -e OVPN_FILE="<YOUR VPN FILE NAME>" \
 -e VPN_USER="<YOUR VPN USER>" \
 -e VPN_PASSWORD="YOUR VPN PASSWORD" \
 -v "<PATH/TO/YOUR/VPN/FILES/FOLDER>:/ovpn" \
-squid_openvpn
+vpntabs
 
 # To run a TOR container
 docker run -d \
 --name "TOR" \
 -p "9050:9050" \
 -e TOR_CONTAINER="1" \
-squid_openvpn
+vpntabs
 ```
 *The envoriment variable* `OVPN_FILE` *is used to know which file OpenVPN should use*.
 
@@ -70,7 +70,7 @@ squid_openvpn
 
 ### If everything is ok, you should see this output:
 ```
-$ ./VPNTabs --run ovpn_files/mullvad_br_sao.conf
+$ ./VPNTabs -r ovpn_files/mullvad_br_sao.conf
 
      ___
      "._`-.         (\-.
@@ -83,9 +83,9 @@ $ ./VPNTabs --run ovpn_files/mullvad_br_sao.conf
             tabs with VPN
   Nicholas Ferreira & Gabriel Belli
 
-[+] Proxy server is running on http://172.17.0.2:3128 with mullvad_br_sao.conf
+[+] Proxy server is running on socks://172.17.0.4:9050 with mullvad_br_sao.conf
 
-Container id:  07b08c7c4e92
+Container id:  1a322089b9e
 ```
 
 ### 6. Add Multi Account Containers to Firefox

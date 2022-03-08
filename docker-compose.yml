@@ -23,7 +23,7 @@
 #    devices:                                     # --|  \  |     DO NOT CHANGE THIS!     |
 #      - /dev/net/tun                             # --|  /  | IT IS NEEDED TO VPN TO WORK |
 #    sysctls:                                     #   | /   +-----------------------------+
-#      - net.ipv6.conf.all.disable_ipv6: 0        #   |/
+#      - "net.ipv6.conf.all.disable_ipv6"0"       #   |/
 #    restart: always                              # <-- You can change if you want
 #    environment:                                 # <-- Environments variables to config the VPN:
 #      OVPN_FILE: "<PUT YOUR VPN FILE NAME HERE!>"# <-- NEEDED: put your ovpn file name
@@ -72,7 +72,7 @@
 #    devices:
 #      - /dev/net/tun
 #    sysctls:
-#      - net.ipv6.conf.all.disable_ipv6: 0
+#      - "net.ipv6.conf.all.disable_ipv6=0"
 #    restart: always
 #    environment:
 #      OVPN_FILE: "<PUT YOUR VPN FILE NAME HERE!>"
