@@ -19,11 +19,11 @@
 #    ports:                                       # <-- OPTIONAL: use this if you want to map port to host
 #      - "3128:3128"                              # <-- Map squid port to host
 #    cap_add:                                     #   |\
-#      - NET_ADMIN                                #   | \   +-----------------------------+
-#    devices:                                     # --|  \  |     DO NOT CHANGE THIS!     |
-#      - /dev/net/tun                             # --|  /  | IT IS NEEDED TO VPN TO WORK |
-#    sysctls:                                     #   | /   +-----------------------------+
-#      - "net.ipv6.conf.all.disable_ipv6"0"       #   |/
+#      - NET_ADMIN                                #   | \   +--------------------------------+
+#    devices:                                     # --|  \  |       DO NOT CHANGE THIS!      |
+#      - /dev/net/tun                             # --|  /  |  IT IS NEEDED FOR VPN TO WORK  |
+#    sysctls:                                     #   | /   +--------------------------------+
+#      - "net.ipv6.conf.all.disable_ipv6=0"       #   |/
 #    restart: always                              # <-- You can change if you want
 #    environment:                                 # <-- Environments variables to config the VPN:
 #      OVPN_FILE: "<PUT YOUR VPN FILE NAME HERE!>"# <-- NEEDED: put your ovpn file name
