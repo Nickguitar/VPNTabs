@@ -44,7 +44,7 @@ e.g.:
 
 *[Alternative] Instead of using* `VPNTabs`, *you can run your custom script or use docker-compose. Here is an example:*
 ```
-# To run q VPN container
+# To run a VPN container
 docker run -d \
 --cap-add=NET_ADMIN \
 --device /dev/net/tun \
