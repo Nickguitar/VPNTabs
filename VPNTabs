@@ -3,8 +3,7 @@
 # Gabriel Belli - github.com/gabrielbelli
 # 26/02/22
 
-port=3128
-tor_port=9050
+port=9050
 vpn_user=''
 vpn_password=''
 
@@ -14,6 +13,8 @@ orange="\033[0;33m"
 white="\033[1;37m"
 reset="\033[0m"
 
+
+### Function declaration zone
 checkdocker(){
 	if [ ! `which docker` ]; then
 		echo -e "${red}[-] You must have docker installed. See: https://docs.docker.com/engine/install/${reset}"
@@ -38,30 +39,27 @@ ask(){
     echo ""
 }
 
-banner
 
 help_banner(){
 	echo -e "Usage:\n\n - Build image:\n$0 --build\n\n - Run a VPN container:\n$0 --run <OPENVPN FILE> [--map] [--port <PORT>] [--name <CONTAINER NAME>] [--ask-credendials]"
     echo -e "\n - Run a TOR container:\n$0 --run --tor [--map] [--port <PORT>]\n"
 	echo "Options:"
-	echo "   -h, --help				See this help message"
-	echo "   -b, --build				Build the docker image"
-	echo "   -l, --list				List containers"
-	echo "   -n, --name <NAME>			Container name (optional)"
-    echo "   -m, --map				Map port to host (like docker run -p)"
-    echo "   -p, --port <PORT>			Proxy port (VPN default: 3128 | TOR default: 9050) (-m,--map required)"
-	echo "   -r, --run <FILE>			Run the docker container with the specified file"
-	echo "   -t, --tor 				Run the docker container with TOR Proxy"
-    echo "   -c, --ask-credentials		Ask VPN credentials (if your ovpn file doesn't contain it)"
-    echo "   -v, --verbose			Guess what!"
-    echo "   --delete <CONTAINER NAME|ID>		Delete container"
-	echo "   --start <CONTAINER NAME|ID>		Start a container"
-	echo "   --stop <CONTAINER NAME|ID>		Stop a container"
+	echo "   -h, --help                                  See this help message"
+	echo "   -b, --build                                 Build the docker image"
+	echo "   -l, --list                                  List containers"
+	echo "   -n, --name <NAME>                           Container name (optional)"
+    echo "   -m, --map                                   Map port to host (like docker run -p)"
+    echo "   -p, --port <PORT>                           Proxy port (VPN default: 3128 | TOR default: 9050) (-m,--map required)"
+	echo "   -r, --run <FILE>                            Run the docker container with the specified file"
+	echo "   -t, --tor                                   Run the docker container with TOR Proxy"
+    echo "   -c, --ask-credentials                       Ask VPN credentials (if your ovpn file doesn't contain it)"
+    echo "   -v, --verbose                               Guess what!"
+	echo "   --stop <CONTAINER NAME|ID>                  Stop a container"
 	echo ""
 	echo "Usage examples:"
-	echo " $ $0 --build					Build the image"
-	echo " $ $0 -r us2957.nordvpn.com -n Nord_US		Run the container w/ NordVPN config file"
-	echo " $ $0 -r --tor --name tor 			Run the container w/ tor"
+	echo " $ $0 --build                                   Build the image"
+	echo " $ $0 -r us2957.nordvpn.com -n Nord_US          Run the container w/ NordVPN config file"
+	echo " $ $0 -r --tor --name tor                       Run the container w/ tor"
 	echo ""
 	exit
 }
@@ -79,44 +77,38 @@ checkport(){
 }
 
 checkfile(){
-	if ! [ -f $(dirname $(realpath $0))/ovpn_files/$(basename $1) ];then
+	if ! [ -f $(dirname $(realpath $0))/ovpn_files/$(basename $filename) ];then
 		echo -e "${red}[-] Your config file must be a file inside\n"$(dirname $(realpath $0))/ovpn_files".${reset}"
 		exit
 	fi
 }
 
 run_container(){
-	if [[ ! "$1" && ! $tor ]]; then
-		echo -e "${red}[-] Choose a ovpn config file from ovpn_files with -f <filename.ovpn>, or use --run --tor to run with TOR Proxy.${reset}"
-		exit
-	fi
-
 	if [[ $tor ]]; then
 		filename=empty
-        protocol='socks://'
-        echo_port=$torport
     else
         vpn_args='--cap-add=NET_ADMIN --device /dev/net/tun --sysctl net.ipv6.conf.all.disable_ipv6=0'
-        protocol='http://'
-        echo_port=$port
+		checkfile
 	fi
 
 	random_string=$(tr -dc A-Za-z0-9 </dev/urandom | head -c 5)
-	docker_run=$(sudo docker run -d $vpn_args \
-    $(if [ $portmap ];then if [ $tor ];then echo "-p $tor_port:9050";else echo "-p $port:3128";fi;fi ) \
-	$(if [ $tor ]; then echo "--name tor_${random_string}";elif [ $2 ]; then echo "--name ${2}";fi) \
+
+    docker_run=$(sudo docker run --rm -d $vpn_args \
+    $(if [ $portmap ];then echo "-p $port:9050";fi ) \
+	$(if [ $tor ]; then echo "--name tor_${random_string}";elif [ $2 ]; then echo "--name ${name}";fi) \
     -e OVPN_FILE=$(basename "$filename") \
-	-e TOR_CONTAINER="$4" \
+	-e TOR_CONTAINER="$tor" \
     -e VPN_USER="$vpn_user" \
     -e VPN_PASSWORD="$vpn_password" \
 	-v $(dirname $(realpath "$0"))/ovpn_files:/ovpn \
-    squid_openvpn)
+    vpntabs 2>&1)
+
 	if [ $? -eq 0 ]; then
         ip="127.0.0.1"
         if [ ! $portmap ]; then 
             ip=$(sudo docker exec ${docker_run} ip -f inet addr show eth0 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
         fi
-        echo -e "${green}[+] Proxy server is running on ${white}${protocol}${ip}:${echo_port}"$(if [ $tor ]; then echo "${green} with ${white}TOR"; else echo "${green} with ${white}$(basename $1)"; fi)${reset}
+        echo -e "${green}[+] Proxy server is running on ${white}socks://${ip}:${port}"$(if [ $tor ]; then echo "${green} with ${white}TOR"; else echo "${green} with ${white}$(basename $filename)"; fi)${reset}
         echo ""
         echo -e "${white}Container id: " ${docker_run:0:12}
 	
@@ -131,39 +123,33 @@ run_container(){
 			container_start=$(sudo docker container start "$container_id" 2>&1 > /dev/null)
 		fi
 
-		if [[ $(echo "$container_start" | grep "already allocated") ]]; then
+		if [[ $(echo "$docker_run" | grep "already allocated") ]]; then
 			echo -e "${red}[-] Port already allocated. Choose another port with -p <port>.${reset}"
-			sudo docker rm -f "$container_id" > /dev/null
+            echo ""
 			exit 7359
 		fi
 		echo -e "${red}[-] Couldn't run docker container.${reset}"
+        echo ""
 		exit 7359
 	fi
 }
 
 build(){
 	echo -e "${green}[*] Building the docker image... Be patient...${reset}"
-	sudo docker build -t squid_openvpn .
+	sudo docker build -t vpntabs .
 	if [ $? -eq 0 ]; then
 		echo -e "${green}[+] Image built! Use $0 --run <ovpn file> to run with the selected file.${reset}"
 	else
 		echo -e "${red}[-] Could't build docker image...${reset}"
 	fi
+    echo ""
 	exit
 }
 
 list_containers(){
 	echo "CONTAINER ID	PORT	CREATED		STATUS		NAME"
-	sudo docker ps -a  | grep "squid_openvpn" | sed -E "s/0.0.0.0:|->3128\/tcp//g" | sed -E "s/( {2,})/;/g" | awk -F';' '{ print $1 "\t" $6 "\t" $4 "\t" $5 "\t" $7 }'
-}
-
-start_container(){
-	if [[ "$1" == "" ]]; then
-		echo -e "${red}[-] You need to insert the name of the container.${reset}\nUse ${white}$0 --list${reset} to see the container names"
-		exit
-	fi
-	sudo docker container start "$1"
-	exit
+	sudo docker ps -a  | grep "vpntabs" | sed -E "s/0.0.0.0:|->3128\/tcp//g" | sed -E "s/( {2,})/;/g" | awk -F';' '{ print $1 "\t" $6 "\t" $4 "\t" $5 "\t" $7 }'
+    echo ""
 }
 
 stop_container(){
@@ -171,32 +157,41 @@ stop_container(){
 		echo -e "${red}[-] You need to insert the name of the container.${reset}\nUse ${white}$0 --list${reset} to see the container names"
 	fi
 	sudo docker container stop "$1"
+    echo ""
 	exit
 }
 
-delete_container(){
-	if [[ "$1" == "" ]]; then
-		echo -e "${red}[-] Container name cannot be empty. ${reset}\nUse ${white}$0 --list${reset} to see the container names"
-		exit
-	fi
-	sudo docker rm -f "$1"
+create_network(){
+    network=$(docker network create -d bridge --subnet $2 $1 2>&1)
+    if [[ $network == *"Error"* ]]; then
+        echo -e "${red}${network}${reset}"
+    else
+        echo "network $1 created with id: "${network:0:12}
+    fi
+    echo ""
+    exit
 }
 
+### Always print banner
+banner
+
+### Argument reading
 while [ "$1" != "" ]; do
     case $1 in
-        -b | --build ) build
+        -b | --build )
+            build
             shift ;;
 
         -p | --port )
             shift
             port="$1"
-            tor_port="$1"
             checkport "$port" ;;
 
         -m | --map )
         	portmap=1 ;;
 
-        -h | --help ) help_banner ;;
+        -h | --help )
+            help_banner ;;
 
         -n | --name )
         	shift
@@ -222,14 +217,6 @@ while [ "$1" != "" ]; do
         -l | --list )
         	list=1 ;;
 
-		-d | --delete )
-			shift
-			delete_container "$1" ;;
-
-        --start )
-        	shift
-        	start_container "$1" ;;
-
         --stop )
         	shift
         	stop_container "$1" ;;
@@ -240,11 +227,12 @@ while [ "$1" != "" ]; do
     shift
 done
 
+### Command execution
 if [[ $run ]]; then
 	if [[ ! $tor ]]; then
-		checkfile "$filename"
+		checkfile
 	fi
-	run_container "$filename" "$name" "$port" "$tor" "$tor_port"
+	run_container
 	exit
 elif [[ $list ]]; then
 	list_containers
